@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { findOrCreateContact } from '@/lib/api/v1/contacts';
 import {
   createBroadcast,
   finalizeBroadcastStatus,
@@ -144,6 +145,21 @@ describe('createBroadcast recipient validation (#586)', () => {
     expect(plan.planned).toEqual([
       { recipientRowId: 'r-1', phone: '14155550123', params: ['first'] },
     ]);
+  });
+
+  it('counts an archived contact as rejected, so it is never messaged', async () => {
+    vi.mocked(findOrCreateContact).mockResolvedValueOnce({ id: 'c9', created: false, archived: true });
+    const { db } = makeDb({
+      data: [{ broadcast_id: 'b-1', recipient_id: 'r-1', contact_id: 'c1' }],
+      error: null,
+    });
+
+    const plan = await createBroadcast(db, 'acc', 'user', {
+      templateName: 'promo',
+      recipients: [{ to: '+201000000001' }, { to: '+14155550123' }],
+    });
+
+    expect(plan.rejected).toBe(1);
   });
 
   it('fails the whole request when no recipient carries a country code', async () => {

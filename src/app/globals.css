@@ -243,3 +243,7 @@ html[data-theme="rose"] {
     @apply font-sans;
   }
 }
+
+html[data-embedded] [data-shell-chrome] {
+  display: none;
+}

@@ -27,6 +27,7 @@ export async function GET(
       .select(CONVERSATION_SELECT)
       .eq('id', id)
       .eq('account_id', ctx.accountId)
+      .is('archived_at', null)
       .maybeSingle();
 
     if (error) {

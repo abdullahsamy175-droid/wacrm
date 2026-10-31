@@ -51,9 +51,14 @@ function DashboardShellInner({ children }: { children: React.ReactNode }) {
       {/* Desktop alerts for new customer messages (opt-in via Settings →
           Your profile). Headless — renders nothing. */}
       <BrowserNotificationsListener />
-      <Sidebar open={sidebarOpen} onClose={closeSidebar} />
+      {/* Hidden inside the Bnerd Portal, whose own sidebar replaces them. */}
+      <div data-shell-chrome className="contents">
+        <Sidebar open={sidebarOpen} onClose={closeSidebar} />
+      </div>
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header onOpenSidebar={() => setSidebarOpen(true)} />
+        <div data-shell-chrome className="contents">
+          <Header onOpenSidebar={() => setSidebarOpen(true)} />
+        </div>
         {/* Thinner horizontal padding on mobile so cards have room to breathe. */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* Above every page: writes are being rejected and here's why.

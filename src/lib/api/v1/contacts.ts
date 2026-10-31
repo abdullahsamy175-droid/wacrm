@@ -25,6 +25,8 @@ export interface ApiContact {
   company: string | null;
   avatar_url: string | null;
   tags: { id: string; name: string; color: string }[];
+  /** Set once archived. Finding the contact again never clears it. */
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -55,6 +57,7 @@ export function serializeContact(row: Record<string, unknown>): ApiContact {
       .map((j) => j.tags)
       .filter((t): t is NonNullable<RawTagJoin['tags']> => t != null)
       .map((t) => ({ id: t.id, name: t.name, color: t.color })),
+    archived_at: (row.archived_at as string | null) ?? null,
     created_at: row.created_at as string,
     updated_at: row.updated_at as string,
   };
@@ -112,7 +115,7 @@ export async function findOrCreateContact(
   accountId: string,
   auditUserId: string,
   input: ContactInput
-): Promise<{ id: string; created: boolean }> {
+): Promise<{ id: string; created: boolean; archived: boolean }> {
   // Raw integrator input: the leading `+` is required so the country
   // code is explicit. A national-format number ("4155551212") would
   // otherwise be persisted and then misdelivered on every later send
@@ -126,7 +129,9 @@ export async function findOrCreateContact(
   }
 
   const existing = await findExistingContact(db, accountId, sanitized);
-  if (existing) return { id: existing.id, created: false };
+  if (existing) {
+    return { id: existing.id, created: false, archived: Boolean(existing.archived_at) };
+  }
 
   const { data: created, error } = await db
     .from('contacts')
@@ -146,13 +151,15 @@ export async function findOrCreateContact(
     // rejected the duplicate. Re-resolve to the winner.
     if (isUniqueViolation(error)) {
       const raced = await findExistingContact(db, accountId, sanitized);
-      if (raced) return { id: raced.id, created: false };
+      if (raced) {
+        return { id: raced.id, created: false, archived: Boolean(raced.archived_at) };
+      }
     }
     console.error('[api/v1/contacts] create error:', error);
     throw new ContactError('Failed to create contact', 500);
   }
 
-  return { id: created.id, created: true };
+  return { id: created.id, created: true, archived: false };
 }
 
 /**

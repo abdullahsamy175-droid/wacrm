@@ -1,7 +1,16 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { frameHeaders, parseFrameAncestors } from '@/lib/security/frame-headers'
+
 export async function middleware(request: NextRequest) {
+  const response = await route(request)
+  const headers = frameHeaders(parseFrameAncestors(process.env.FRAME_ANCESTORS))
+  Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value))
+  return response
+}
+
+async function route(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(

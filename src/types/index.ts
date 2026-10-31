@@ -98,6 +98,8 @@ export interface AccountInvitation {
 
 export interface Contact {
   id: string;
+  /** Set when archived (migration 061). Archived contacts never reach the dashboard. */
+  archived_at?: string | null;
   user_id: string;
   account_id: string;
   /** Empty string for a contact Meta only ever identified by BSUID —

@@ -31,6 +31,7 @@ describe('serializeContact', () => {
       email: null,
       company: 'Acme',
       avatar_url: null,
+      archived_at: null,
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-02T00:00:00Z',
       contact_tags: [
@@ -46,6 +47,7 @@ describe('serializeContact', () => {
       company: 'Acme',
       avatar_url: null,
       tags: [{ id: 't1', name: 'vip', color: '#fff' }],
+      archived_at: null,
       created_at: '2026-01-01T00:00:00Z',
       updated_at: '2026-01-02T00:00:00Z',
     });

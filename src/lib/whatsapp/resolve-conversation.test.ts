@@ -9,7 +9,7 @@ import { SendMessageError } from './send-message';
 // (maybeSingle/single) resolve to configured data; the builder
 // itself is thenable so an awaited `update().eq()` resolves cleanly.
 // ------------------------------------------------------------
-type ContactRow = { id: string; phone: string; name?: string | null };
+type ContactRow = { id: string; phone: string; name?: string | null; archived_at?: string | null };
 
 interface Script {
   config?: { user_id: string } | null; // whatsapp_config.maybeSingle
@@ -171,6 +171,17 @@ describe('resolveConversationByPhone', () => {
       contactCreated: false,
       conversationCreated: false,
     });
+  });
+
+  it('refuses an archived contact before touching its conversation', async () => {
+    const db = makeDb({
+      config: { user_id: 'owner-1' },
+      contactCandidates: [{ id: 'c1', phone: '14155550123', archived_at: '2026-10-31T10:00:00Z' }],
+      existingConversation: { id: 'cv1' },
+    });
+    await expect(
+      resolveConversationByPhone(db, 'acct', '+14155550123')
+    ).rejects.toMatchObject({ code: 'contact_archived', status: 409 });
   });
 
   it('creates contact + conversation when none exist', async () => {

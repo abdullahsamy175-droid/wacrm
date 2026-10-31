@@ -780,6 +780,10 @@ async function processMessage(
   // trigger installed in migration 003).
   await flagBroadcastReplyIfAny(accountId, contactRecord.id)
 
+  // An archived contact's message is kept, hidden with its conversation,
+  // but it starts nothing: no flow, automation, AI reply or webhook.
+  if (contactRecord.archived_at) return
+
   // ============================================================
   // Flow runner dispatch.
   //

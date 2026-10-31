@@ -5,6 +5,7 @@ const mocks = vi.hoisted(() => ({ eqCalls: [] as [string, unknown][] }));
 function fakeSupabase() {
   const builder: Record<string, unknown> = {
     select: () => builder,
+    is: () => builder,
     eq: (column: string, value: unknown) => {
       mocks.eqCalls.push([column, value]);
       return builder;

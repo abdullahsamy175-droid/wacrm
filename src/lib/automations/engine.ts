@@ -495,6 +495,17 @@ type ScopeOutcome = 'completed' | 'suspended' | 'failed'
 async function executeStepsFrom(args: ExecuteArgs): Promise<ScopeOutcome> {
   const db = supabaseAdmin()
 
+  // Every path into a run lands here, including resumed waits, so an
+  // archived contact is stopped however the run began.
+  if (args.contactId) {
+    const { data: contact } = await db
+      .from('contacts')
+      .select('archived_at')
+      .eq('id', args.contactId)
+      .maybeSingle()
+    if (contact?.archived_at) return 'completed'
+  }
+
   const baseQuery = db
     .from('automation_steps')
     .select('*')

@@ -35,7 +35,8 @@ export async function GET(request: Request) {
     let query = ctx.supabase
       .from('conversations')
       .select(CONVERSATION_SELECT)
-      .eq('account_id', ctx.accountId);
+      .eq('account_id', ctx.accountId)
+      .is('archived_at', null);
 
     if (status) query = query.eq('status', status);
     if (contactId) query = query.eq('contact_id', contactId);

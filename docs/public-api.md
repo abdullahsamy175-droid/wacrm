@@ -47,9 +47,12 @@ it. Grant the minimum.
 | `messages:read`      | Read messages and delivery status        |
 | `contacts:read`      | List and read contacts                   |
 | `contacts:write`     | Create and update contacts               |
+| `contacts:archive`   | Archive contacts                         |
 | `conversations:read` | List and read conversations              |
 | `broadcasts:send`    | Launch broadcast campaigns               |
 | `webhooks:manage`    | Register and manage outbound webhooks    |
+| `deals:read`         | List and read pipelines and deals        |
+| `deals:write`        | Create and update deals                  |
 
 A key with **no scopes** still authenticates and can call
 `GET /api/v1/me` — useful for verifying a key works.
@@ -212,6 +215,73 @@ Read or update one contact. Scopes: `contacts:read` / `contacts:write`.
 `PATCH` updates only the fields you send (`name`, `email`, `company`);
 pass `tags` (an array of tag names) to replace the contact's tags. A
 contact in another account returns `404`.
+
+### `DELETE /api/v1/contacts/{id}`
+
+Archive a contact. Scope: `contacts:archive`. **Nothing is deleted:** the
+contact, its conversations and its deals leave every dashboard screen and
+the list endpoints, and sends to it are refused with `409 contact_archived`.
+Repeat calls succeed and keep the first timestamp. `POST /api/v1/contacts`
+with the same phone returns the contact with `archived_at` still set.
+
+```json
+{ "data": { "id": "…", "archived_at": "2026-10-31T17:00:00.000Z" } }
+```
+
+### `GET /api/v1/pipelines`
+
+Pipelines with their stages in board order. Scope: `deals:read`. Not
+paginated. wacrm creates the default pipeline the first time someone opens
+the board, so this is empty until then.
+
+```json
+{
+  "data": [
+    {
+      "id": "…", "name": "Sales Pipeline", "created_at": "…",
+      "stages": [{ "id": "…", "name": "Lead", "position": 0, "color": "#3b82f6" }]
+    }
+  ]
+}
+```
+
+### `GET /api/v1/deals`
+
+List deals, newest first. Scope: `deals:read`. Paginated. Optional filters:
+`pipeline_id`, `stage_id`, `contact_id`, `status` (`open` / `won` / `lost`)
+and `updated_after` (ISO 8601). Deals of archived contacts are left out.
+
+There is no deal webhook: the board writes deals straight to the database.
+To follow stage changes, poll with `updated_after`.
+
+```json
+{
+  "data": [
+    {
+      "id": "…", "title": "Mona trial", "value": 250, "currency": "EGP",
+      "status": "open", "pipeline_id": "…", "stage_id": "…", "stage_name": "Lead",
+      "contact_id": "…", "conversation_id": null, "assigned_to": null,
+      "notes": null, "expected_close_date": null, "closed_at": null,
+      "created_at": "…", "updated_at": "…"
+    }
+  ],
+  "meta": { "next_cursor": null }
+}
+```
+
+### `POST /api/v1/deals`
+
+Create a deal. Scope: `deals:write`. `title` and `contact_id` are required.
+`pipeline_id` defaults to the oldest pipeline and `stage_id` to its first
+stage. `value`, `currency`, `notes` and `expected_close_date` are optional.
+Returns `201` with the deal, `404` if the contact or pipeline isn't found, or
+`409 contact_archived`.
+
+### `GET` / `PATCH /api/v1/deals/{id}`
+
+Read or update one deal. Scopes: `deals:read` / `deals:write`. `PATCH` updates
+only the fields you send: `title`, `value`, `status`, `notes`,
+`expected_close_date` and `stage_id`, which must be in the deal's pipeline.
 
 ### `GET /api/v1/conversations`
 
@@ -397,5 +467,5 @@ internal targets are refused at delivery time.
 The public API now covers messaging, contacts, conversations,
 broadcasts, and outbound webhooks — the full scope of
 [#245](https://github.com/ArnasDon/wacrm/issues/245). Future ideas
-(deals/pipelines, templates, flows, a delivery queue for webhooks) are
+(templates, flows, a delivery queue for webhooks) are
 not yet scheduled.

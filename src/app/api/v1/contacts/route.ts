@@ -52,7 +52,8 @@ export async function GET(request: Request) {
     let query = ctx.supabase
       .from('contacts')
       .select(selectClause)
-      .eq('account_id', ctx.accountId);
+      .eq('account_id', ctx.accountId)
+      .is('archived_at', null);
 
     if (searchFilter) {
       query = query.or(searchFilter);

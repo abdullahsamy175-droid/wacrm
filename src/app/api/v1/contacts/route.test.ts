@@ -12,6 +12,7 @@ function fakeSupabase() {
       return builder;
     },
     eq: () => builder,
+    is: () => builder,
     or: (filter: string) => {
       mocks.orFilters.push(filter);
       return builder;

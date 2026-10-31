@@ -1,6 +1,7 @@
 // ============================================================
-// GET   /api/v1/contacts/{id} — read a contact  (scope: contacts:read)
-// PATCH /api/v1/contacts/{id} — update a contact (scope: contacts:write)
+// GET    /api/v1/contacts/{id} — read a contact    (scope: contacts:read)
+// PATCH  /api/v1/contacts/{id} — update a contact   (scope: contacts:write)
+// DELETE /api/v1/contacts/{id} — archive a contact  (scope: contacts:archive)
 //
 // Both are account-scoped: a contact belonging to another account
 // returns 404 (never 403 — don't reveal it exists elsewhere).
@@ -10,12 +11,42 @@
 
 import { requireApiKey } from '@/lib/auth/api-context';
 import { ok, fail, toApiErrorResponse } from '@/lib/api/v1/respond';
+import { isUuid } from '@/lib/api/v1/pagination';
 import {
   getContactById,
   setContactTags,
   resolveAuditUserId,
   ContactError,
 } from '@/lib/api/v1/contacts';
+
+/**
+ * Archives, never deletes: the contact leaves every screen and can't be
+ * messaged, and all its rows stay. Repeat calls succeed and keep the
+ * first timestamp. See supabase/migrations/061_contact_archive.sql.
+ */
+export async function DELETE(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const ctx = await requireApiKey(request, 'contacts:archive');
+    const { id } = await params;
+    if (!isUuid(id)) return fail('not_found', 'Contact not found', 404);
+
+    const { data, error } = await ctx.supabase.rpc('archive_contact', {
+      p_account_id: ctx.accountId,
+      p_contact_id: id,
+    });
+    if (error) {
+      console.error('[api/v1/contacts] archive error:', error);
+      return fail('internal', 'Failed to archive contact', 500);
+    }
+    if (!data) return fail('not_found', 'Contact not found', 404);
+    return ok({ id, archived_at: data as string });
+  } catch (err) {
+    return toApiErrorResponse(err);
+  }
+}
 
 export async function GET(
   request: Request,

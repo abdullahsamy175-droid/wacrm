@@ -65,6 +65,7 @@ export const viewport: Viewport = {
 const THEME_BOOT_SCRIPT = `
 (function(){
   var d = document.documentElement;
+  if (window.self !== window.top) d.dataset.embedded = "true";
   try {
     var THEME_KEY = ${JSON.stringify(STORAGE_KEY)};
     var THEME_DEFAULT = ${JSON.stringify(DEFAULT_THEME)};

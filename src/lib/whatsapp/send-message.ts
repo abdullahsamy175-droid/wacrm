@@ -238,6 +238,10 @@ export async function sendMessageToConversation(
 
   const contact = conversation.contact;
 
+  if (contact?.archived_at) {
+    throw new SendMessageError('contact_archived', 'This contact is archived', 409);
+  }
+
   // A contact is addressable by phone number OR by business-scoped user
   // ID. Meta withholds the phone number for a customer who has adopted
   // a WhatsApp username, so those contacts carry only a BSUID and are

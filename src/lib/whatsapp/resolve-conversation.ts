@@ -93,6 +93,9 @@ export async function resolveConversationByPhone(
   let contactCreated = false;
 
   const existing = await findExistingContact(db, accountId, sanitized);
+  if (existing?.archived_at) {
+    throw new SendMessageError('contact_archived', 'This contact is archived', 409);
+  }
   if (existing) {
     contactId = existing.id;
   } else {
