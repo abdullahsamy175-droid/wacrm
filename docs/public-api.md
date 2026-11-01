@@ -273,7 +273,8 @@ To follow stage changes, poll with `updated_after`.
 
 Create a deal. Scope: `deals:write`. `title` and `contact_id` are required.
 `pipeline_id` defaults to the oldest pipeline and `stage_id` to its first
-stage. `value`, `currency`, `notes` and `expected_close_date` are optional.
+stage. `currency` defaults to the account's (Settings -> Deals). `value`,
+`notes` and `expected_close_date` are optional.
 Returns `201` with the deal, `404` if the contact or pipeline isn't found, or
 `409 contact_archived`.
 

@@ -14,7 +14,8 @@ describe("formatCurrency", () => {
     expect(out).not.toContain(".00");
   });
 
-  it("defaults to USD when no currency is given", () => {
+  it("defaults to EGP when no currency is given", () => {
+    expect(DEFAULT_CURRENCY).toBe("EGP");
     expect(formatCurrency(10)).toBe(formatCurrency(10, DEFAULT_CURRENCY));
   });
 
@@ -55,6 +56,7 @@ describe("formatCurrencyShort", () => {
   });
 
   it("uses the matching symbol for non-USD currencies", () => {
+    expect(formatCurrencyShort(3_400, "EGP")).toBe("E£3.4k");
     expect(formatCurrencyShort(1_000, "EUR")).toBe("€1.0k");
     expect(formatCurrencyShort(1_000, "INR")).toBe("₹1.0k");
   });

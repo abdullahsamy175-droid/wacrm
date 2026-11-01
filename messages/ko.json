@@ -2415,6 +2415,7 @@
     "description": "직접 호스팅할 수 있는 WhatsApp용 CRM 템플릿입니다."
   },
   "Currency": {
+    "EGP": "이집트 파운드",
     "USD": "미국 달러",
     "EUR": "유로",
     "GBP": "영국 파운드",

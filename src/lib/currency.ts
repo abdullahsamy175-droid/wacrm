@@ -13,7 +13,7 @@
 import { getT } from "@/lib/i18n/translate";
 
 /** App-wide fallback when no account/deal currency is available. */
-export const DEFAULT_CURRENCY = "USD";
+export const DEFAULT_CURRENCY = "EGP";
 
 export interface CurrencyOption {
   /** ISO-4217 code, e.g. "USD". Stored verbatim in the DB. */
@@ -32,6 +32,7 @@ const t = getT("Currency");
  * list to offer more — nothing else needs to change.
  */
 export const CURRENCIES: CurrencyOption[] = [
+  { code: "EGP", label: t("EGP"), symbol: "E£" },
   { code: "USD", label: t("USD"), symbol: "$" },
   { code: "EUR", label: t("EUR"), symbol: "€" },
   { code: "GBP", label: t("GBP"), symbol: "£" },
@@ -51,8 +52,8 @@ export const CURRENCIES: CurrencyOption[] = [
 
 /**
  * Format a deal value as a currency string. Whole-number output
- * (no minor units) — deal values are tracked to the dollar across
- * the app. `currency` defaults to USD so callers with nothing better
+ * (no minor units) — deal values are tracked to the whole unit across
+ * the app. `currency` defaults to EGP so callers with nothing better
  * stay safe, but pass the account/deal currency wherever known.
  *
  * Total by design: `Intl.NumberFormat` throws a RangeError on a

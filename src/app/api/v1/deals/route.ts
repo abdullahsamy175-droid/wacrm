@@ -12,6 +12,7 @@ import { ok, okList, fail, toApiErrorResponse } from '@/lib/api/v1/respond';
 import { parseListParams, keysetFilter, buildPage, isUuid } from '@/lib/api/v1/pagination';
 import { resolveAuditUserId, ContactError } from '@/lib/api/v1/contacts';
 import { DEAL_SELECT, isDealStatus, serializeDeal } from '@/lib/api/v1/deals';
+import { DEFAULT_CURRENCY } from '@/lib/currency';
 
 export async function GET(request: Request) {
   try {
@@ -137,6 +138,24 @@ export async function POST(request: Request) {
         : stages[0];
     if (!stage) return fail('bad_request', 'Stage not found in this pipeline', 400);
 
+    // Like the dashboard and automations: the account's currency unless told otherwise.
+    let currency = body.currency;
+    if (currency === undefined) {
+      const { data: account, error: accountError } = await ctx.supabase
+        .from('accounts')
+        .select('default_currency')
+        .eq('id', ctx.accountId)
+        .maybeSingle();
+      if (accountError) {
+        console.error('[api/v1/deals] account lookup error:', accountError);
+        return fail('internal', 'Failed to create deal', 500);
+      }
+      currency = account?.default_currency ?? DEFAULT_CURRENCY;
+    }
+    if (typeof currency !== 'string' || !/^[A-Z]{3}$/.test(currency)) {
+      return fail('bad_request', "'currency' must be a 3-letter ISO code, like EGP", 400);
+    }
+
     const userId = await resolveAuditUserId(ctx.supabase, ctx.accountId);
     const { data: deal, error } = await ctx.supabase
       .from('deals')
@@ -148,7 +167,7 @@ export async function POST(request: Request) {
         contact_id: contactId,
         title,
         value,
-        currency: typeof body.currency === 'string' ? body.currency : undefined,
+        currency,
         notes: typeof body.notes === 'string' ? body.notes : null,
         expected_close_date:
           typeof body.expected_close_date === 'string' ? body.expected_close_date : null,

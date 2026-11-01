@@ -2415,6 +2415,7 @@
     "description": "Plantilla de CRM para WhatsApp que puedes alojar tú mismo."
   },
   "Currency": {
+    "EGP": "Libra egipcia",
     "USD": "Dólar estadounidense",
     "EUR": "Euro",
     "GBP": "Libra esterlina",

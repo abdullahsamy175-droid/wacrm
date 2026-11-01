@@ -2415,6 +2415,7 @@
     "description": "Self-hostable CRM template for WhatsApp."
   },
   "Currency": {
+    "EGP": "Egyptian Pound",
     "USD": "US Dollar",
     "EUR": "Euro",
     "GBP": "British Pound",

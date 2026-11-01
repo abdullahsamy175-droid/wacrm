@@ -2415,6 +2415,7 @@
     "description": "Modelo de CRM para WhatsApp que você pode hospedar por conta própria."
   },
   "Currency": {
+    "EGP": "Libra egípcia",
     "USD": "Dólar americano",
     "EUR": "Euro",
     "GBP": "Libra esterlina",
