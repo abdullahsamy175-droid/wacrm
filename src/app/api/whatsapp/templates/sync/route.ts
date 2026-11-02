@@ -35,6 +35,7 @@ interface MetaButton {
   url?: string
   phone_number?: string
   example?: string[] | string
+  otp_type?: string
 }
 
 interface MetaTemplateComponent {
@@ -110,7 +111,12 @@ function parseButtons(metaButtons: MetaButton[] | undefined): TemplateButton[] {
           example: Array.isArray(b.example) ? b.example[0] ?? '' : b.example ?? '',
         })
         break
-      // OTP, FLOW, etc — out of scope for v1; drop silently.
+      case 'OTP':
+        // An authentication template's code button. Dropping it would make every send of
+        // the template fail: Meta wants the code for it (template-send-builder.ts).
+        out.push({ type: 'OTP', text: b.text ?? '', otp_type: b.otp_type })
+        break
+      // FLOW, etc — out of scope for v1; drop silently.
     }
   }
   return out

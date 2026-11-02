@@ -2714,6 +2714,7 @@
       "headerTextValueRequired": "A variável {var} do cabeçalho de texto exige um valor — informe headerText.",
       "mediaHeaderSendSource": "O cabeçalho {type} exige um link ou id de mídia no envio — defina header_media_url no modelo ou informe headerMediaUrl/headerMediaId.",
       "bodyValuesMissing": "O corpo tem {count} variável(is), mas apenas {got} valor(es) foram informados.",
+      "otpButtonParamRequired": "O botão de código de verificação #{n} precisa do código: envie-o em buttonParams[{index}] ou como o primeiro valor do corpo.",
       "urlButtonParamRequired": "O botão URL #{n} usa {var} — exige um valor em buttonParams[{index}]."
     },
     "interactive": {

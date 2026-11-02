@@ -27,11 +27,12 @@ export interface MetaComponent {
 }
 
 interface MetaButtonPayload {
-  type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
+  type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE' | 'OTP';
   text: string;
   url?: string;
   phone_number?: string;
   example?: string[];
+  otp_type?: string;
 }
 
 function buildHeaderComponent(payload: TemplatePayload): MetaComponent | null {
@@ -103,6 +104,8 @@ function buildButtonPayload(b: TemplateButton): MetaButtonPayload {
       return { type: 'PHONE_NUMBER', text: b.text, phone_number: b.phone_number };
     case 'COPY_CODE':
       return { type: 'COPY_CODE', text: b.text, example: [b.example] };
+    case 'OTP':
+      return { type: 'OTP', text: b.text, otp_type: b.otp_type ?? 'COPY_CODE' };
   }
 }
 

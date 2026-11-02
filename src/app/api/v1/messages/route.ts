@@ -23,7 +23,8 @@
 //       "params": ["A123"] | { "body": [...] }   // array = positional body; object = structured
 //     },
 //     "reply_to_message_id": "<uuid>",       // optional, must be in the same conversation
-//     "name": "Jane Doe"                     // optional, names a newly-created contact
+//     "name": "Jane Doe",                    // optional, names a newly-created contact
+//     "redact": true                         // optional, templates only: store no sent values (Bnerd)
 //   }
 //
 // Response (201):
@@ -63,6 +64,12 @@ export async function POST(request: Request) {
 
     const type = typeof body.type === 'string' ? body.type : 'text';
 
+    // Signup codes go out this way: what was sent is stored nowhere (send-message.ts).
+    if (body.redact !== undefined && typeof body.redact !== 'boolean') {
+      return fail('bad_request', "'redact' must be true or false", 400);
+    }
+    const redact = body.redact === true;
+
     // Unpack the optional `template` object into the flat params the
     // send core expects. `params` as an array → legacy positional body
     // params; as an object → structured header/body/button params.
@@ -96,6 +103,7 @@ export async function POST(request: Request) {
       mediaUrl: typeof body.media_url === 'string' ? body.media_url : null,
       templateName: typeof template?.name === 'string' ? template.name : null,
       interactivePayload,
+      redact,
     });
 
     // Find-or-create the conversation for this phone, then send. Both
@@ -136,6 +144,7 @@ export async function POST(request: Request) {
           typeof body.reply_to_message_id === 'string'
             ? body.reply_to_message_id
             : null,
+        redact,
       }
     );
 

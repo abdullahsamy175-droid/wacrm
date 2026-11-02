@@ -173,6 +173,12 @@ Response (201):
 }
 ```
 
+**Redacted sends (Bnerd).** Add `"redact": true` to a template message to keep what it carries out of
+the inbox, as for a signup verification code. The message is stored as "Verification code sent",
+with its `template_name`, and the values sent appear in no table, log or error. An AUTHENTICATION
+template's copy-code (`OTP`) button takes the code from `params.buttonParams["0"]`, else the first
+body value. `redact` on any other message type is a 400.
+
 Domain error codes beyond the table above: `whatsapp_not_configured`
 (400), `meta_error` (502 — the request reached Meta and it rejected the
 send), `template_malformed` (500).

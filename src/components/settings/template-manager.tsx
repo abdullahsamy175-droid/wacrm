@@ -128,6 +128,9 @@ function emptyButton(type: TemplateButton['type']): TemplateButton {
       return { type: 'PHONE_NUMBER', text: '', phone_number: '' };
     case 'COPY_CODE':
       return { type: 'COPY_CODE', text: '', example: '' };
+    // Authentication templates are made in Meta; one synced here keeps its code button.
+    case 'OTP':
+      return { type: 'OTP', text: '' };
   }
 }
 

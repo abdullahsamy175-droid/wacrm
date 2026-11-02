@@ -2714,6 +2714,7 @@
       "headerTextValueRequired": "La variable {var} del encabezado de texto requiere un valor; envía headerText.",
       "mediaHeaderSendSource": "El encabezado {type} requiere un enlace o id de medio al enviar; define header_media_url en la plantilla o envía headerMediaUrl/headerMediaId.",
       "bodyValuesMissing": "El cuerpo tiene {count} variable(s), pero solo se proporcionaron {got} valor(es).",
+      "otpButtonParamRequired": "El botón de código de verificación #{n} necesita el código: pásalo en buttonParams[{index}] o como primer valor del cuerpo.",
       "urlButtonParamRequired": "El botón URL #{n} usa {var}; requiere un valor en buttonParams[{index}]."
     },
     "interactive": {

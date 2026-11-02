@@ -342,7 +342,12 @@ export type TemplateButton =
   | { type: 'QUICK_REPLY'; text: string }
   | { type: 'URL'; text: string; url: string; example?: string }
   | { type: 'PHONE_NUMBER'; text: string; phone_number: string }
-  | { type: 'COPY_CODE'; text: string; example: string };
+  | { type: 'COPY_CODE'; text: string; example: string }
+  /**
+   * An AUTHENTICATION template's code button, as Meta returns it on sync. Created in
+   * Meta, not here; at send time it carries the code like a URL button (Bnerd).
+   */
+  | { type: 'OTP'; text: string; otp_type?: string };
 
 export interface TemplateSampleValues {
   body?: string[];

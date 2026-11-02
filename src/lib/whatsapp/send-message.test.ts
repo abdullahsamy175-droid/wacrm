@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
+  REDACTED_TEMPLATE_TEXT,
   sendMessageToConversation,
   SendMessageError,
   type SendMessageParams,
@@ -527,6 +528,101 @@ describe('sendMessageToConversation — statuses that beat the insert', () => {
       expect.anything(),
       'acct-1',
       'wamid.text'
+    );
+  });
+});
+
+// ============================================================
+// Redacted sends (Bnerd): signup verification codes.
+// ============================================================
+
+describe('sendMessageToConversation — redacted template sends', () => {
+  const CODE = '482913';
+  const VERIFY_ROW = {
+    ...TEMPLATE_ROW,
+    name: 'signup_code',
+    category: 'Authentication',
+    body_text: '{{1}} is your verification code.',
+    buttons: [{ type: 'OTP', text: 'Copy code', otp_type: 'COPY_CODE' }],
+  };
+  const params = (extra: Partial<SendMessageParams> = {}): SendMessageParams => ({
+    conversationId: 'cv-1',
+    messageType: 'template',
+    templateName: 'signup_code',
+    templateMessageParams: { body: [CODE], buttonParams: { 0: CODE } },
+    redact: true,
+    ...extra,
+  });
+
+  it('stores a fixed text, keeps the template name, and puts the code nowhere', async () => {
+    const captured: CapturedWrites = {};
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    await sendMessageToConversation(sendPathDb([VERIFY_ROW], captured), 'acct-1', params());
+
+    expect(captured.message?.content_text).toBe(REDACTED_TEMPLATE_TEXT);
+    expect(captured.message?.template_name).toBe('signup_code');
+    expect(captured.conversation?.last_message_text).toBe(REDACTED_TEMPLATE_TEXT);
+    expect(JSON.stringify(captured)).not.toContain(CODE);
+    const logged = JSON.stringify([log.mock.calls, warn.mock.calls, error.mock.calls]);
+    expect(logged).not.toContain(CODE);
+    log.mockRestore();
+    warn.mockRestore();
+    error.mockRestore();
+  });
+
+  it('ignores caller text, which could hold the code too', async () => {
+    const captured: CapturedWrites = {};
+    await sendMessageToConversation(
+      sendPathDb([VERIFY_ROW], captured),
+      'acct-1',
+      params({ contentText: `${CODE} is your verification code.` })
+    );
+    expect(captured.message?.content_text).toBe(REDACTED_TEMPLATE_TEXT);
+  });
+
+  it('masks the code in the error and the log when Meta refuses the send', async () => {
+    const captured: CapturedWrites = {};
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    sendTemplateMessage.mockImplementationOnce(async () => {
+      throw new Error(`(#131008) Parameter value ${CODE} is not valid`);
+    });
+
+    const failure = await sendMessageToConversation(
+      sendPathDb([VERIFY_ROW], captured),
+      'acct-1',
+      params()
+    ).catch((e: SendMessageError) => e);
+
+    expect(failure).toBeInstanceOf(SendMessageError);
+    expect((failure as SendMessageError).message).not.toContain(CODE);
+    expect((failure as SendMessageError).message).toContain('[redacted]');
+    expect(JSON.stringify(error.mock.calls)).not.toContain(CODE);
+    expect(captured.message).toBeUndefined();
+    error.mockRestore();
+  });
+
+  it('keeps the error as it is for an ordinary send', async () => {
+    sendTemplateMessage.mockImplementationOnce(async () => {
+      throw new Error('(#131008) Parameter value A123 is not valid');
+    });
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failure = await sendMessageToConversation(
+      sendPathDb([TEMPLATE_ROW], {}),
+      'acct-1',
+      { conversationId: 'cv-1', messageType: 'template', templateName: 'order_update', templateParams: ['A123', 'Friday'] }
+    ).catch((e: SendMessageError) => e);
+    expect((failure as SendMessageError).message).toContain('A123');
+    error.mockRestore();
+  });
+
+  it('refuses redact on anything but a template', async () => {
+    await expectSendError(
+      { conversationId: 'cv-1', messageType: 'text', contentText: 'Hi', redact: true },
+      400,
+      /only for template messages/
     );
   });
 });

@@ -137,6 +137,40 @@ describe('POST /api/whatsapp/templates/sync', () => {
     })
   })
 
+  it("keeps an authentication template's OTP button, which every send needs", async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            data: [
+              {
+                id: 'meta-2',
+                name: 'signup_code',
+                language: 'ar',
+                status: 'APPROVED',
+                category: 'AUTHENTICATION',
+                components: [
+                  { type: 'BODY', text: '*{{1}}* is your verification code.' },
+                  { type: 'BUTTONS', buttons: [{ type: 'OTP', otp_type: 'COPY_CODE', text: 'Copy code' }] },
+                ],
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      ),
+    )
+
+    await POST()
+
+    expect(templateInserts[0]).toMatchObject({
+      name: 'signup_code',
+      category: 'Authentication',
+      buttons: [{ type: 'OTP', otp_type: 'COPY_CODE', text: 'Copy code' }],
+    })
+  })
+
   it('still syncs when the account holds duplicate rows for the same name and language', async () => {
     localTemplates = [{ id: 'newest' }, { id: 'older' }]
 

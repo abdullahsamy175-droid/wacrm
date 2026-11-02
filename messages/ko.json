@@ -2714,6 +2714,7 @@
       "headerTextValueRequired": "헤더 텍스트 변수 {var}에 값이 필요합니다 — headerText를 전달하세요.",
       "mediaHeaderSendSource": "{type} 헤더는 전송 시 미디어 링크나 id가 필요합니다 — 템플릿에 header_media_url을 설정하거나 headerMediaUrl/headerMediaId를 전달하세요.",
       "bodyValuesMissing": "본문에 변수가 {count}개 있지만 값은 {got}개만 제공되었습니다.",
+      "otpButtonParamRequired": "인증 코드 버튼 #{n}에 코드가 필요합니다: buttonParams[{index}] 또는 본문의 첫 번째 값으로 전달하세요.",
       "urlButtonParamRequired": "URL 버튼 #{n}이(가) {var}을(를) 사용합니다 — buttonParams[{index}] 값이 필요합니다."
     },
     "interactive": {

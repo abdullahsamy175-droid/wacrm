@@ -84,6 +84,7 @@ const TEMPLATE_BUTTON_ICONS: Record<TemplateButton["type"], LucideIcon> = {
   URL: ExternalLink,
   PHONE_NUMBER: Phone,
   COPY_CODE: Copy,
+  OTP: Copy,
 };
 
 function TemplateHeader({

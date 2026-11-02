@@ -51,6 +51,12 @@ import {
 } from '@/lib/whatsapp/template-body';
 
 export const MEDIA_KINDS = ['image', 'video', 'document', 'audio'] as const;
+
+/**
+ * What a redacted template send stores in place of its body (Bnerd): the
+ * Portal sends signup codes this way, so no code sits in the shared inbox.
+ */
+export const REDACTED_TEMPLATE_TEXT = 'Verification code sent';
 export const VALID_MESSAGE_TYPES = [
   'text',
   'template',
@@ -90,6 +96,12 @@ export interface SendMessageParams {
   interactivePayload?: InteractiveMessagePayload | null;
   replyToMessageId?: string | null;
   senderId?: string | null;
+  /**
+   * Template messages only. The values sent (a verification code) are stored nowhere:
+   * the message and the conversation preview read `REDACTED_TEMPLATE_TEXT`, and errors
+   * and logs mask them.
+   */
+  redact?: boolean;
 }
 
 export interface SendMessageResult {
@@ -120,8 +132,9 @@ export function validateSendMessageParams(params: {
   mediaUrl?: string | null;
   templateName?: string | null;
   interactivePayload?: InteractiveMessagePayload | null;
+  redact?: boolean;
 }): void {
-  const { messageType, contentText, mediaUrl, templateName, interactivePayload } =
+  const { messageType, contentText, mediaUrl, templateName, interactivePayload, redact } =
     params;
 
   if (!messageType) {
@@ -142,6 +155,14 @@ export function validateSendMessageParams(params: {
     throw new SendMessageError(
       'bad_request',
       'content_text is required for text messages',
+      400
+    );
+  }
+
+  if (redact && messageType !== 'template') {
+    throw new SendMessageError(
+      'bad_request',
+      'redact is only for template messages',
       400
     );
   }
@@ -186,6 +207,31 @@ export function validateSendMessageParams(params: {
   }
 }
 
+/** Every value a template send fills in: body, header text and button parameters. */
+function sentTemplateValues(templateParams?: string[], templateMessageParams?: unknown): string[] {
+  const structured = (templateMessageParams ?? {}) as {
+    body?: unknown;
+    headerText?: unknown;
+    buttonParams?: unknown;
+  };
+  const values = [
+    ...(templateParams ?? []),
+    ...(Array.isArray(structured.body) ? structured.body : []),
+    structured.headerText,
+    ...(structured.buttonParams && typeof structured.buttonParams === 'object'
+      ? Object.values(structured.buttonParams as Record<string, unknown>)
+      : []),
+  ];
+  return values.filter((v): v is string => typeof v === 'string' && v.trim() !== '');
+}
+
+/** `text` with each of `values` replaced, longest first so a value inside another can't survive. */
+function maskValues(text: string, values: string[]): string {
+  return [...new Set(values)]
+    .sort((a, b) => b.length - a.length)
+    .reduce((out, value) => out.split(value).join('[redacted]'), text);
+}
+
 export async function sendMessageToConversation(
   db: SupabaseClient,
   accountId: string,
@@ -204,6 +250,7 @@ export async function sendMessageToConversation(
     templateMessageParams,
     interactivePayload,
     replyToMessageId,
+    redact,
   } = params;
 
   if (!conversationId) {
@@ -220,6 +267,7 @@ export async function sendMessageToConversation(
     mediaUrl,
     templateName,
     interactivePayload,
+    redact,
   });
 
   const isMediaKind = (MEDIA_KINDS as readonly string[]).includes(messageType);
@@ -444,8 +492,11 @@ export async function sendMessageToConversation(
 
     if (lastError) throw lastError;
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : 'Unknown Meta API error';
+    const raw = err instanceof Error ? err.message : 'Unknown Meta API error';
+    // Meta can quote a parameter back in its error; a redacted send's values go nowhere.
+    const message = redact
+      ? maskValues(raw, sentTemplateValues(templateParams, templateMessageParams))
+      : raw;
     console.error('[send-message] Meta send failed for all variants:', message);
     throw new SendMessageError('meta_error', `Meta API error: ${message}`, 502);
   }
@@ -473,7 +524,9 @@ export async function sendMessageToConversation(
   const persistedText =
     messageType === 'interactive'
       ? interactivePayload!.body
-      : messageType === 'template'
+      : redact
+        ? REDACTED_TEMPLATE_TEXT
+        : messageType === 'template'
         ? templateContentText(
             templateRow,
             templateBodyParams(templateParams, templateMessageParams),

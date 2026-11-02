@@ -243,6 +243,43 @@ describe('buildSendComponents — buttons', () => {
       .parameters[0].coupon_code).toBe('PERSONAL_CODE');
   });
 
+  it('sends an OTP button the code as a url parameter, the way Meta wants it', () => {
+    const components = buildSendComponents(
+      row({
+        category: 'Authentication',
+        body_text: '{{1}} is your verification code.',
+        buttons: [{ type: 'OTP', text: 'Copy code', otp_type: 'COPY_CODE' }],
+      }),
+      { body: ['482913'], buttonParams: { 0: '482913' } },
+    );
+    expect(components).toEqual([
+      { type: 'body', parameters: [{ type: 'text', text: '482913' }] },
+      { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: '482913' }] },
+    ]);
+  });
+
+  it('falls back to the first body value for an OTP button, which is the code', () => {
+    const components = buildSendComponents(
+      row({
+        body_text: '{{1}} is your verification code.',
+        buttons: [{ type: 'OTP', text: 'Copy code' }],
+      }),
+      { body: ['482913'] },
+    );
+    expect(components[1]).toEqual({
+      type: 'button',
+      sub_type: 'url',
+      index: '0',
+      parameters: [{ type: 'text', text: '482913' }],
+    });
+  });
+
+  it('throws rather than send an OTP button without a code', () => {
+    expect(() =>
+      buildSendComponents(row({ buttons: [{ type: 'OTP', text: 'Copy code' }] })),
+    ).toThrow();
+  });
+
   it('skips PHONE_NUMBER buttons entirely (no send-time params allowed)', () => {
     const components = buildSendComponents(
       row({

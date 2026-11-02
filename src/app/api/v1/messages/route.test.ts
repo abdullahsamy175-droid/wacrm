@@ -77,6 +77,44 @@ describe('POST /api/v1/messages', () => {
     );
   });
 
+  it('passes redact through to the send core', async () => {
+    mocks.resolveConversationByPhone.mockResolvedValue({
+      conversationId: 'cv1',
+      contactId: 'c1',
+      contactCreated: false,
+      conversationCreated: false,
+    });
+    const res = await POST(
+      new Request('https://x.test/api/v1/messages', {
+        method: 'POST',
+        body: JSON.stringify({
+          to: '+201012345678',
+          type: 'template',
+          template: { name: 'signup_code', language: 'ar', params: { body: ['482913'], buttonParams: { 0: '482913' } } },
+          redact: true,
+        }),
+      })
+    );
+    expect(res.status).toBe(201);
+    expect(mocks.sendMessageToConversation).toHaveBeenCalledWith(
+      mocks.supabase,
+      'account-1',
+      expect.objectContaining({ redact: true, templateName: 'signup_code' })
+    );
+  });
+
+  it('refuses a redact that is not true or false, and redact on a text message', async () => {
+    const post = (body: Record<string, unknown>) =>
+      POST(new Request('https://x.test/api/v1/messages', { method: 'POST', body: JSON.stringify(body) }));
+
+    const bad = await post({ to: '+201012345678', type: 'template', template: { name: 'signup_code' }, redact: 'yes' });
+    expect(bad.status).toBe(400);
+    const text = await post({ to: '+201012345678', text: 'Hi', redact: true });
+    expect(text.status).toBe(400);
+    expect(mocks.resolveConversationByPhone).not.toHaveBeenCalled();
+    expect(mocks.sendMessageToConversation).not.toHaveBeenCalled();
+  });
+
   it('does not dispatch conversation.created for an existing conversation', async () => {
     mocks.resolveConversationByPhone.mockResolvedValue({
       conversationId: 'cv1',
