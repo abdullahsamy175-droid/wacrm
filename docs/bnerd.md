@@ -19,20 +19,23 @@ All three staff apps need the same parent domain. The session cookies
 depend on it: Payload's is `SameSite=Strict`, and wacrm's must work inside
 the Portal's frame.
 
-| App | Example | Used as |
-|---|---|---|
-| Portal | `portal.example.com` | `CORS_ORIGINS` in Payload, `FRAME_ANCESTORS` here |
-| wacrm | `crm.example.com` | `NEXT_PUBLIC_SITE_URL` here, `WACRM_URL` in Payload, `NEXT_PUBLIC_WACRM_URL` in the Portal |
-| Payload | `portal-api.example.com` | `SERVER_URL` in Payload, `NEXT_PUBLIC_PAYLOAD_URL` in the Portal |
+The domain is `bnerdedu.com`, on Cloudflare (2026-11-04).
 
-Payload also needs `COOKIE_DOMAIN=.example.com`. Each `NEXT_PUBLIC_*` value
+| App | Hostname | Used as |
+|---|---|---|
+| Portal | `portal.bnerdedu.com` | `CORS_ORIGINS` in Payload, `FRAME_ANCESTORS` here |
+| wacrm | `crm.bnerdedu.com` | `NEXT_PUBLIC_SITE_URL` here, `WACRM_URL` in Payload, `NEXT_PUBLIC_WACRM_URL` in the Portal |
+| Payload | `portal-api.bnerdedu.com` | `SERVER_URL` in Payload, `NEXT_PUBLIC_PAYLOAD_URL` in the Portal |
+
+Payload also needs `COOKIE_DOMAIN=.bnerdedu.com`. Each `NEXT_PUBLIC_*` value
 is built into the image, so changing one means a rebuild.
 
 ## First run
 
 1. Create the Supabase project and apply `supabase/migrations/` in order.
-   Under Authentication -> URL Configuration, set the Site URL to wacrm's
-   address and add `<crm>/auth/callback` to the redirect URLs.
+   Under Authentication -> URL Configuration, set the Site URL to
+   `https://crm.bnerdedu.com` and add
+   `https://crm.bnerdedu.com/auth/callback` to the redirect URLs.
 2. Fill in `docs/bnerd.env.example` as `.env.local`, leaving
    `WACRM_SSO_ACCOUNT_ID` empty, and deploy.
 3. Open the app directly and sign up once. This user owns the shared
@@ -41,7 +44,7 @@ is built into the image, so changing one means a rebuild.
 4. Turn off public sign-up in Supabase (Authentication -> Providers ->
    Email), so staff can only arrive through the Portal.
 5. As the owner, add the WhatsApp details in Settings and point Meta's
-   webhook at `https://<crm>/api/whatsapp/webhook`.
+   webhook at `https://crm.bnerdedu.com/api/whatsapp/webhook`.
 6. In Settings -> API keys, create a key for Payload with `contacts:read`,
    `contacts:write`, `contacts:archive`, `messages:send`, `messages:read`,
    `conversations:read`, `deals:read`, `deals:write` and `webhooks:manage`.
