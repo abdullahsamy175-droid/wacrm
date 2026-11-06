@@ -59,13 +59,19 @@ jobs:
     permissions:
       contents: read
       packages: write
+    # The staging Supabase project (Frankfurt). Both values are public by design: the anon key ships to every
+    # browser in the client bundle, and row-level security protects the data. The environment's variables
+    # override them when set. The service-role key is a secret and never goes here or in the image.
+    env:
+      STAGING_SUPABASE_URL: https://qlqqkeojxnrglswueney.supabase.co
+      STAGING_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFscXFrZW9qeG5yZ2xzd3VlbmV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM4ODYxNDksImV4cCI6MjEwOTQ2MjE0OX0.bxZw5afebBAG_-aYklaOhsiOeIL3G2IN_m4EkJVucKU
     steps:
       - uses: actions/checkout@v7
 
       - name: Check the environment's values are set
         env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL || env.STAGING_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.STAGING_SUPABASE_ANON_KEY }}
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
         run: |
           missing=0
@@ -105,8 +111,8 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+            NEXT_PUBLIC_SUPABASE_URL=${{ vars.NEXT_PUBLIC_SUPABASE_URL || env.STAGING_SUPABASE_URL }}
+            NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ vars.NEXT_PUBLIC_SUPABASE_ANON_KEY || env.STAGING_SUPABASE_ANON_KEY }}
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
             NEXT_PUBLIC_APP_LOCALE=${{ vars.NEXT_PUBLIC_APP_LOCALE || 'en' }}
           cache-from: type=gha
